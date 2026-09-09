@@ -83,4 +83,28 @@ std::optional<std::int64_t> OrderBook::best_ask() const {
   return asks_.begin()->first;
 }
 
+std::int64_t OrderBook::bid_depth(std::int64_t price) const {
+  auto level = bids_.find(price);
+  if (level == bids_.end()) {
+    return 0;
+  }
+  std::int64_t qty = 0;
+  for (const Order& order : level->second) {
+    qty += order.qty;
+  }
+  return qty;
+}
+
+std::int64_t OrderBook::ask_depth(std::int64_t price) const {
+  auto level = asks_.find(price);
+  if (level == asks_.end()) {
+    return 0;
+  }
+  std::int64_t qty = 0;
+  for (const Order& order : level->second) {
+    qty += order.qty;
+  }
+  return qty;
+}
+
 }  // namespace lob

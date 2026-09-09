@@ -35,6 +35,9 @@ class OrderBook {
   std::optional<std::int64_t> best_bid() const;
   std::optional<std::int64_t> best_ask() const;
 
+  std::int64_t bid_depth(std::int64_t price) const;
+  std::int64_t ask_depth(std::int64_t price) const;
+
  private:
   using Queue = std::list<Order>;
   using BidBook = std::map<std::int64_t, Queue, std::greater<std::int64_t>>;
