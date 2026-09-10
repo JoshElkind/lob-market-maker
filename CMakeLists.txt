@@ -9,3 +9,6 @@ add_library(lob
   src/book.cpp
 )
 target_include_directories(lob PUBLIC include)
+
+add_executable(lob_tests tests/test_book.cpp)
+target_link_libraries(lob_tests PRIVATE lob)
