@@ -5,7 +5,10 @@
 namespace lob {
 namespace {
 
-bool crosses(Side side, std::int64_t limit, std::int64_t level) {
+bool crosses(Side side, std::int64_t limit, std::int64_t level, bool is_market) {
+  if (is_market) {
+    return true;
+  }
   if (side == Side::Buy) {
     return limit >= level;
   }
@@ -20,7 +23,7 @@ std::vector<Trade> OrderBook::match(Book& opposite, Order& incoming) {
   while (incoming.qty > 0 && !opposite.empty()) {
     auto level_it = opposite.begin();
     const std::int64_t level_price = level_it->first;
-    if (!crosses(incoming.side, incoming.price, level_price)) {
+    if (!crosses(incoming.side, incoming.price, level_price, incoming.is_market)) {
       break;
     }
     auto& queue = level_it->second;
@@ -57,12 +60,12 @@ std::vector<Trade> OrderBook::add(Order order) {
   std::vector<Trade> trades;
   if (order.side == Side::Buy) {
     trades = match(asks_, order);
-    if (order.qty > 0) {
+    if (!order.is_market && order.qty > 0) {
       rest(bids_, order);
     }
   } else {
     trades = match(bids_, order);
-    if (order.qty > 0) {
+    if (!order.is_market && order.qty > 0) {
       rest(asks_, order);
     }
   }

@@ -16,7 +16,7 @@ void expect(bool cond, const std::string& msg) {
 }
 
 lob::Order limit(std::uint64_t id, lob::Side side, std::int64_t price, std::int64_t qty) {
-  return lob::Order{id, side, price, qty};
+  return lob::Order{id, side, price, qty, false};
 }
 
 }  // namespace
@@ -36,6 +36,18 @@ int main() {
     expect(trades[1].maker_id == 2 && trades[1].qty == 1, "second fill is the next FIFO order");
     expect(book.bid_depth(100) == 1, "one lot remains behind the partial fill");
     expect(book.best_bid() == 100, "touch stays at 100");
+  }
+
+  {
+    OrderBook book;
+    book.add(limit(1, Side::Sell, 101, 4));
+    book.add(limit(2, Side::Sell, 103, 4));
+    lob::Order market{3, Side::Buy, 0, 6, true};
+    const auto trades = book.add(market);
+    expect(trades.size() == 2, "market buy sweeps two ask levels");
+    expect(trades[0].price == 101 && trades[0].qty == 4, "first level is the best ask");
+    expect(trades[1].price == 103 && trades[1].qty == 2, "remainder walks to the next level");
+    expect(book.ask_depth(103) == 2, "unfilled size stays at the second level");
   }
 
   if (failures != 0) {

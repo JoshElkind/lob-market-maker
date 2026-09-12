@@ -14,9 +14,10 @@ enum class Side { Buy, Sell };
 struct Order {
   std::uint64_t id = 0;
   Side side = Side::Buy;
-  // Limit price in ticks.
+  // Limit price in ticks. Ignored for market orders.
   std::int64_t price = 0;
   std::int64_t qty = 0;
+  bool is_market = false;
 };
 
 struct Trade {
