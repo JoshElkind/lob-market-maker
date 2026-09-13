@@ -60,6 +60,12 @@ void OrderBook::rest(Book& book, Order order) {
 }
 
 std::vector<Trade> OrderBook::add(Order order) {
+  if (order.qty <= 0 || order.id == 0) {
+    return {};
+  }
+  if (index_.count(order.id) != 0) {
+    return {};
+  }
   std::vector<Trade> trades;
   if (order.side == Side::Buy) {
     trades = match(asks_, order);
