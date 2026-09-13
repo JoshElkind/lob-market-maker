@@ -40,6 +40,16 @@ int main() {
 
   {
     OrderBook book;
+    book.add(limit(1, Side::Buy, 100, 1));
+    book.add(limit(2, Side::Sell, 105, 1));
+    const auto trades = book.add(limit(3, Side::Buy, 104, 1));
+    expect(trades.empty(), "bid below the ask does not trade");
+    expect(book.best_bid() == 104, "the better bid becomes the touch");
+    expect(book.live_orders() == 3, "new bid is live");
+  }
+
+  {
+    OrderBook book;
     book.add(limit(1, Side::Sell, 101, 4));
     book.add(limit(2, Side::Sell, 103, 4));
     lob::Order market{3, Side::Buy, 0, 6, true};
@@ -48,6 +58,21 @@ int main() {
     expect(trades[0].price == 101 && trades[0].qty == 4, "first level is the best ask");
     expect(trades[1].price == 103 && trades[1].qty == 2, "remainder walks to the next level");
     expect(book.ask_depth(103) == 2, "unfilled size stays at the second level");
+  }
+
+  {
+    OrderBook book;
+    book.add(limit(1, Side::Buy, 50, 1));
+    expect(book.cancel(1), "cancel removes a live order");
+    expect(!book.best_bid().has_value(), "book is empty after cancel");
+    expect(!book.cancel(1), "double cancel fails");
+  }
+
+  {
+    OrderBook book;
+    lob::Order market{1, Side::Buy, 0, 1, true};
+    expect(book.add(market).empty(), "market order on an empty book does not trade");
+    expect(book.live_orders() == 0, "market orders do not rest");
   }
 
   if (failures != 0) {

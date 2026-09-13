@@ -40,6 +40,7 @@ std::vector<Trade> OrderBook::match(Book& opposite, Order& incoming) {
       incoming.qty -= fill;
       resting.qty -= fill;
       if (resting.qty == 0) {
+        index_.erase(resting.id);
         queue.pop_front();
       }
     }
@@ -54,6 +55,8 @@ template <typename Book>
 void OrderBook::rest(Book& book, Order order) {
   auto& queue = book[order.price];
   queue.push_back(order);
+  auto it = std::prev(queue.end());
+  index_[order.id] = Locator{order.side, order.price, it};
 }
 
 std::vector<Trade> OrderBook::add(Order order) {
@@ -70,6 +73,35 @@ std::vector<Trade> OrderBook::add(Order order) {
     }
   }
   return trades;
+}
+
+bool OrderBook::cancel(std::uint64_t id) {
+  auto found = index_.find(id);
+  if (found == index_.end()) {
+    return false;
+  }
+  const Locator loc = found->second;
+  index_.erase(found);
+  if (loc.side == Side::Buy) {
+    auto level = bids_.find(loc.price);
+    if (level == bids_.end()) {
+      return false;
+    }
+    level->second.erase(loc.it);
+    if (level->second.empty()) {
+      bids_.erase(level);
+    }
+  } else {
+    auto level = asks_.find(loc.price);
+    if (level == asks_.end()) {
+      return false;
+    }
+    level->second.erase(loc.it);
+    if (level->second.empty()) {
+      asks_.erase(level);
+    }
+  }
+  return true;
 }
 
 std::optional<std::int64_t> OrderBook::best_bid() const {
