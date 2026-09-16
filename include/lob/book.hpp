@@ -37,6 +37,7 @@ class OrderBook {
 
   std::optional<std::int64_t> best_bid() const;
   std::optional<std::int64_t> best_ask() const;
+  std::optional<std::int64_t> mid_ticks() const;
 
   std::int64_t bid_depth(std::int64_t price) const;
   std::int64_t ask_depth(std::int64_t price) const;

@@ -124,6 +124,15 @@ std::optional<std::int64_t> OrderBook::best_ask() const {
   return asks_.begin()->first;
 }
 
+std::optional<std::int64_t> OrderBook::mid_ticks() const {
+  const auto bid = best_bid();
+  const auto ask = best_ask();
+  if (!bid || !ask) {
+    return std::nullopt;
+  }
+  return (*bid + *ask) / 2;
+}
+
 std::int64_t OrderBook::bid_depth(std::int64_t price) const {
   auto level = bids_.find(price);
   if (level == bids_.end()) {
