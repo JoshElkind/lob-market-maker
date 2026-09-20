@@ -15,4 +15,5 @@ A price-time priority order book.
 cmake -S . -B build
 cmake --build build
 ./build/lob_tests
+./build/lob_sim
 ```

@@ -7,9 +7,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(lob
   src/book.cpp
+  src/sim.cpp
 )
 target_include_directories(lob PUBLIC include)
 target_compile_options(lob PRIVATE -Wall -Wextra -Wpedantic)
+
+add_executable(lob_sim src/main.cpp)
+target_link_libraries(lob_sim PRIVATE lob)
+target_compile_options(lob_sim PRIVATE -Wall -Wextra -Wpedantic)
 
 add_executable(lob_tests tests/test_book.cpp)
 target_link_libraries(lob_tests PRIVATE lob)
