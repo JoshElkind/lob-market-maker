@@ -17,8 +17,11 @@ struct SimConfig {
 
 struct StrategyReport {
   std::string name;
+  double mean_abs_inventory = 0;
+  double mean_mtm = 0;
   double terminal_mtm = 0;
   std::int64_t fills = 0;
+  std::int64_t max_abs_inventory = 0;
 };
 
 struct SimReport {

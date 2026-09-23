@@ -15,6 +15,9 @@ struct Maker {
   std::int64_t cash = 0;
   std::int64_t inventory = 0;
   std::int64_t fills = 0;
+  std::int64_t max_abs_inventory = 0;
+  double abs_inv_sum = 0;
+  double mtm_sum = 0;
   std::uint64_t bid_id = 0;
   std::uint64_t ask_id = 0;
 };
@@ -29,6 +32,10 @@ void on_trade(Maker& maker, const Trade& trade) {
   maker.cash -= signed_qty * trade.price;
   maker.inventory += signed_qty;
   maker.fills += 1;
+  const std::int64_t abs_inv = maker.inventory < 0 ? -maker.inventory : maker.inventory;
+  if (abs_inv > maker.max_abs_inventory) {
+    maker.max_abs_inventory = abs_inv;
+  }
 }
 
 void pull_quotes(OrderBook& book, Maker& maker) {
@@ -55,10 +62,13 @@ void quote(OrderBook& book, Maker& maker, std::int64_t fair, const SimConfig& cf
   book.add(Order{maker.ask_id, Side::Sell, ask_px, cfg.quote_size, false});
 }
 
-StrategyReport summarize(const Maker& maker) {
+StrategyReport summarize(const Maker& maker, int steps) {
   StrategyReport out;
   out.name = maker.name;
+  out.mean_abs_inventory = maker.abs_inv_sum / static_cast<double>(steps);
+  out.mean_mtm = maker.mtm_sum / static_cast<double>(steps);
   out.fills = maker.fills;
+  out.max_abs_inventory = maker.max_abs_inventory;
   return out;
 }
 
@@ -75,6 +85,9 @@ StrategyReport run_one(const SimConfig& cfg) {
 
   auto mark = [&]() {
     const double mtm = static_cast<double>(maker.cash + maker.inventory * fair);
+    maker.mtm_sum += mtm;
+    const std::int64_t abs_inv = maker.inventory < 0 ? -maker.inventory : maker.inventory;
+    maker.abs_inv_sum += static_cast<double>(abs_inv);
     return mtm;
   };
 
@@ -102,7 +115,7 @@ StrategyReport run_one(const SimConfig& cfg) {
     terminal = mark();
   }
 
-  StrategyReport report = summarize(maker);
+  StrategyReport report = summarize(maker, cfg.steps);
   report.terminal_mtm = terminal;
   return report;
 }
@@ -123,6 +136,9 @@ std::string format_report(const SimReport& report) {
   for (const StrategyReport* row : rows) {
     out << row->name
         << " terminal_mtm=" << row->terminal_mtm
+        << " mean_mtm=" << row->mean_mtm
+        << " mean_abs_inventory=" << row->mean_abs_inventory
+        << " max_abs_inventory=" << row->max_abs_inventory
         << " fills=" << row->fills
         << "\n";
   }
