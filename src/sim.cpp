@@ -76,12 +76,13 @@ StrategyReport run_one(const SimConfig& cfg) {
   std::mt19937_64 rng(cfg.seed);
   std::uniform_real_distribution<double> coin(0.0, 1.0);
   std::uniform_int_distribution<int> noise_side(0, 1);
+  std::uniform_int_distribution<int> jump_sign(0, 1);
 
   OrderBook book;
   Maker maker;
   maker.name = "fixed_spread";
   std::uint64_t next_id = 1;
-  const std::int64_t fair = cfg.fair0;
+  std::int64_t fair = cfg.fair0;
 
   auto mark = [&]() {
     const double mtm = static_cast<double>(maker.cash + maker.inventory * fair);
@@ -106,6 +107,24 @@ StrategyReport run_one(const SimConfig& cfg) {
       } else {
         taker.side = Side::Sell;
         taker.price = fair - cfg.half_spread;
+      }
+      for (const Trade& trade : book.add(taker)) {
+        on_trade(maker, trade);
+      }
+    }
+
+    if (coin(rng) < cfg.jump_prob) {
+      const int direction = jump_sign(rng) == 0 ? -1 : 1;
+      fair += direction * cfg.jump_size;
+      Order taker;
+      taker.id = next_id++;
+      taker.qty = 1;
+      if (direction > 0) {
+        taker.side = Side::Buy;
+        taker.price = fair;
+      } else {
+        taker.side = Side::Sell;
+        taker.price = fair;
       }
       for (const Trade& trade : book.add(taker)) {
         on_trade(maker, trade);
