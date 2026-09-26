@@ -56,10 +56,14 @@ void quote(OrderBook& book, Maker& maker, std::int64_t fair, const SimConfig& cf
   if (bid_px <= 0) {
     return;
   }
-  maker.bid_id = next_id++;
-  book.add(Order{maker.bid_id, Side::Buy, bid_px, cfg.quote_size, false});
-  maker.ask_id = next_id++;
-  book.add(Order{maker.ask_id, Side::Sell, ask_px, cfg.quote_size, false});
+  if (maker.inventory < cfg.max_inventory) {
+    maker.bid_id = next_id++;
+    book.add(Order{maker.bid_id, Side::Buy, bid_px, cfg.quote_size, false});
+  }
+  if (maker.inventory > -cfg.max_inventory) {
+    maker.ask_id = next_id++;
+    book.add(Order{maker.ask_id, Side::Sell, ask_px, cfg.quote_size, false});
+  }
 }
 
 StrategyReport summarize(const Maker& maker, int steps) {
