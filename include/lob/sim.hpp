@@ -13,6 +13,8 @@ struct SimConfig {
   // Fair value jumps by this many ticks. Larger than half_spread, so a stale quote
   // can be through the new fair and an informed taker will trade it.
   std::int64_t jump_size = 4;
+  // Inventory penalty in ticks per contract. Reservation = fair - inventory * skew.
+  std::int64_t skew = 1;
   std::int64_t quote_size = 1;
   std::int64_t max_inventory = 10;
   // Probability a step has a noise taker, then an independent chance the fair value jumps
@@ -32,9 +34,10 @@ struct StrategyReport {
 
 struct SimReport {
   StrategyReport fixed_spread;
+  StrategyReport inventory_skew;
 };
 
-SimReport run_sim(const SimConfig& config);
+SimReport run_comparison(const SimConfig& config);
 std::string format_report(const SimReport& report);
 
 }  // namespace lob

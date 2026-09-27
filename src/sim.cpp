@@ -12,6 +12,7 @@ namespace {
 
 struct Maker {
   std::string name;
+  bool skew = false;
   std::int64_t cash = 0;
   std::int64_t inventory = 0;
   std::int64_t fills = 0;
@@ -51,8 +52,10 @@ void pull_quotes(OrderBook& book, Maker& maker) {
 
 void quote(OrderBook& book, Maker& maker, std::int64_t fair, const SimConfig& cfg, std::uint64_t& next_id) {
   pull_quotes(book, maker);
-  const std::int64_t bid_px = fair - cfg.half_spread;
-  const std::int64_t ask_px = fair + cfg.half_spread;
+  const std::int64_t shift = maker.skew ? maker.inventory * cfg.skew : 0;
+  const std::int64_t reservation = fair - shift;
+  const std::int64_t bid_px = reservation - cfg.half_spread;
+  const std::int64_t ask_px = reservation + cfg.half_spread;
   if (bid_px <= 0) {
     return;
   }
@@ -76,7 +79,7 @@ StrategyReport summarize(const Maker& maker, int steps) {
   return out;
 }
 
-StrategyReport run_one(const SimConfig& cfg) {
+StrategyReport run_one(const SimConfig& cfg, bool skew) {
   std::mt19937_64 rng(cfg.seed);
   std::uniform_real_distribution<double> coin(0.0, 1.0);
   std::uniform_int_distribution<int> noise_side(0, 1);
@@ -84,7 +87,8 @@ StrategyReport run_one(const SimConfig& cfg) {
 
   OrderBook book;
   Maker maker;
-  maker.name = "fixed_spread";
+  maker.name = skew ? "inventory_skew" : "fixed_spread";
+  maker.skew = skew;
   std::uint64_t next_id = 1;
   std::int64_t fair = cfg.fair0;
 
@@ -100,7 +104,7 @@ StrategyReport run_one(const SimConfig& cfg) {
   for (int step = 0; step < cfg.steps; ++step) {
     quote(book, maker, fair, cfg, next_id);
 
-    // Noise takers pay up to the touch.
+    // Noise takers pay up to the unskewed touch. A quote skewed away from them does not trade.
     if (coin(rng) < cfg.noise_prob) {
       Order taker;
       taker.id = next_id++;
@@ -145,9 +149,10 @@ StrategyReport run_one(const SimConfig& cfg) {
 
 }  // namespace
 
-SimReport run_sim(const SimConfig& config) {
+SimReport run_comparison(const SimConfig& config) {
   SimReport report;
-  report.fixed_spread = run_one(config);
+  report.fixed_spread = run_one(config, false);
+  report.inventory_skew = run_one(config, true);
   return report;
 }
 
@@ -155,7 +160,7 @@ std::string format_report(const SimReport& report) {
   std::ostringstream out;
   out.setf(std::ios::fixed);
   out.precision(2);
-  const StrategyReport* rows[] = {&report.fixed_spread};
+  const StrategyReport* rows[] = {&report.fixed_spread, &report.inventory_skew};
   for (const StrategyReport* row : rows) {
     out << row->name
         << " terminal_mtm=" << row->terminal_mtm
