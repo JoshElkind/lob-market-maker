@@ -121,6 +121,8 @@ StrategyReport run_one(const SimConfig& cfg, bool skew) {
       }
     }
 
+    // Jump happens after quotes are live. Informed takers only trade if the stale
+    // quote is through the new fair.
     if (coin(rng) < cfg.jump_prob) {
       const int direction = jump_sign(rng) == 0 ? -1 : 1;
       fair += direction * cfg.jump_size;

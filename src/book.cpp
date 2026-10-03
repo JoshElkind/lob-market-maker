@@ -157,4 +157,6 @@ std::int64_t OrderBook::ask_depth(std::int64_t price) const {
   return qty;
 }
 
+// Explicit instantiations are not required: match/rest are used from this TU only.
+
 }  // namespace lob

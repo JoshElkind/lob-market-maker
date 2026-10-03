@@ -29,6 +29,8 @@ struct Trade {
   std::int64_t qty = 0;
 };
 
+// Price-time priority limit order book.
+// Bids are ordered high-to-low, asks low-to-high. Each level is FIFO.
 class OrderBook {
  public:
   // Resting remainder is kept on the book. Returns fills against resting liquidity.
