@@ -56,7 +56,7 @@ void quote(OrderBook& book, Maker& maker, std::int64_t fair, const SimConfig& cf
   const std::int64_t reservation = fair - shift;
   const std::int64_t bid_px = reservation - cfg.half_spread;
   const std::int64_t ask_px = reservation + cfg.half_spread;
-  if (bid_px <= 0) {
+  if (bid_px >= ask_px || bid_px <= 0) {
     return;
   }
   if (maker.inventory < cfg.max_inventory) {
