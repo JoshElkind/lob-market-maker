@@ -19,3 +19,6 @@ target_compile_options(lob_sim PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(lob_tests tests/test_book.cpp)
 target_link_libraries(lob_tests PRIVATE lob)
 target_compile_options(lob_tests PRIVATE -Wall -Wextra -Wpedantic)
+
+enable_testing()
+add_test(NAME book COMMAND lob_tests)
