@@ -28,3 +28,9 @@ cmake --build build
 ./build/lob_tests
 ./build/lob_sim
 ```
+
+## What to be able to explain
+
+- Why the first order at a price trades before the second.
+- Why a maker who is picked off after a fair-price jump can still show a positive spread and a negative mark-to-market.
+- Why skewing quotes cuts inventory and can also cut fills.
